@@ -4,6 +4,8 @@ var bodyParser=require('body-parser');//para mostrar infomracion mas clara
 var mongoose=require('mongoose');//driver para mongo
 var multer=require('multer');//para poder cargar imagenes-- multipart/form-data en el jade
 var cloudinary=require('cloudinary');//www.cloudinary.com -- servicio para cargar fotos 
+var password_global="abc";
+//var method_override = require("method-override");
 
 cloudinary.config(
 {cloud_name: "alvaro2016",
@@ -37,6 +39,10 @@ var Product=mongoose.model("Product",productSchema);
 //para poder ver en la consola el metodo post
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
+
+//app.use(express.methodOverride());// para falsear el envio del metodo put en el formulario edit producto
+//app.use(method_override('_method'));
+
  var uploader= multer({dest: "./uploads"}); //aqui se guardaran las fotos que se suban
 
 
@@ -78,7 +84,7 @@ app.post("/menu",middleware_upload,
 	function(req,res)
 	{
 		//console.log(req.bodyParser);
-	if (req.body.password == "abc") 
+	if (req.body.password == password_global) 
 	{
 
 
@@ -90,6 +96,8 @@ app.post("/menu",middleware_upload,
 				pricing: req.body.pricing
 				};
 
+
+//cloudinary.uploader.upload(req.files.image_avatar.path)
 		var product = new Product(data);
 		 console.log(req.file);
 
@@ -109,5 +117,93 @@ app.get("/menu/new",function(req,res){
 	res.render("menu/new");
 
 });
+//creacion del admin de la aplicacion
+//ruta para ver el formulario de ingreso 
 
+//post: cuando de invoca a otra pagina desde un formulario
+app.post("/admin",function(req,res){
+
+if (req.body.password==password_global)
+
+ {
+
+Product.find(function(error,documento)
+	{
+		if(error){console.log(error); }
+		else {res.render("admin/index",
+				{products: documento}
+
+			);}
+	});
+
+
+
+
+
+ 	//res.render("menu/new");
+
+
+} 
+else{ 
+	res.end("Contraseña Incorrecta");
+//res.redirect("/");
+
+};
+});
+
+//get: cuando se llama la pagina por el navegador
+app.get("/admin",function(req,res){
+
+
+    res.render("admin/form");
+
+
+
+});
+
+
+app.get("/menu/edit/:id",function(req,res){
+	var id_producto = req.params.id;
+
+Product.findOne({"_id": id_producto},function(error,producto){
+	console.log(producto);
+	res.render("menu/edit",{product: producto});
+
+});
+
+
+
+});
+
+
+app.post("/menu/:id", function(req,res){
+
+console.log(req.body);
+if (true) {
+
+var data={
+	title: req.body.title,
+	description: req.body.description,
+	pricing: req.body.pricing
+
+};
+
+Product.update({"_id":req.params.id},data, function(error,producto){
+console.log(producto);
+res.redirect("/menu");
+
+
+});
+
+} 
+
+else{
+
+res.redirect("/");
+
+};
+
+});
+
+ 
 app.listen(8080);
